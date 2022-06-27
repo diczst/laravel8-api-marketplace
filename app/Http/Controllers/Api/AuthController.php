@@ -4,18 +4,22 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use GrahamCampbell\ResultType\Success;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
+    // login
     public function login(Request $request){
         $validation = Validator::make($request->all(), [
             'email' => 'required',
             'password' => 'required',
         ]);
 
+
+        // (TEMPORARY ASSUMPTION)
+        // sepertinya tidak akan dieksekusi karena validasi biasanya
+        // diatur di aplikasi yang mengakses API (FORM VALIDATION)
         if ($validation->fails()) {
             return $this->error($validation->errors()->first());
         }
@@ -27,13 +31,14 @@ class AuthController extends Controller
             } else {
                 return $this->error('Password salah');
             }
-
             return $this->success($user, "Selamat datang $user->name");
         }
-
         return $this->error("Email atau password salah");
     }
 
+
+
+    // register
     public function register(Request $request){
         $validation = Validator::make($request->all(), [
             'name' => 'required',
@@ -44,7 +49,7 @@ class AuthController extends Controller
 
         if ($validation->fails()) {
             return response()->json([
-                'code' => '400',
+                'code' => 400,
                 'message' => $validation->errors()->first()
             ], 400); 
             // return $validation->errors()->all();
@@ -62,17 +67,57 @@ class AuthController extends Controller
         }
     }
 
+    public function update(Request $request, $id){
+        $user = User::where('id', $id)->first();
+        if($user){
+            $user->update($request->all());
+            return $this->success($user);
+        }
+        return $this->error("User tidak ditemukan");
+    }
+
+    public function uploadImage(Request $request, $id){
+        $user = User::where('id', $id)->first();
+        if($user){
+
+            $filename = "";
+            if($request->image){
+                // dapatkan nama file
+                $image = $request->image->getClientOriginalName();  
+
+                // format nama dengan menghilangkan spasi
+                $image = str_replace(' ', '', $image);
+
+                // membuat agar nama file tidak ada yang sama saat terupload
+                $image = date('Hs').rand(1,999) . "_" . $image;
+
+                $filename = $image;
+                $request->image->storeAs('public/user', $image);
+            } else {
+                return $this->error('Image wajib diberikan');
+            }
+
+            $user->update([
+                'image' => $request->image
+            ]);
+            return $this->success($user);
+        }
+        return $this->error("User tidak ditemukan");
+    }
+
+    // success response
     public function success($data, $message = 'Success'){
         return response()->json([
-            'code' => '200',
+            'code' => 200,
             'message' => $message,
             'data' => $data
         ], 200);
     }
 
+    // error response
     public function error($message = 'Terjadi kesalahan'){
         return response()->json([
-            'code' => '400',
+            'code' => 400,
             'message' => $message
         ], 400); 
     }
