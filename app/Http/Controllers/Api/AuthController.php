@@ -79,8 +79,7 @@ class AuthController extends Controller
     public function uploadImage(Request $request, $id){
         $user = User::where('id', $id)->first();
         if($user){
-
-            $filename = "";
+            $fileName = "";
             if($request->image){
                 // dapatkan nama file
                 $image = $request->image->getClientOriginalName();  
@@ -91,14 +90,14 @@ class AuthController extends Controller
                 // membuat agar nama file tidak ada yang sama saat terupload
                 $image = date('Hs').rand(1,999) . "_" . $image;
 
-                $filename = $image;
+                $fileName = $image;
                 $request->image->storeAs('public/user', $image);
             } else {
                 return $this->error('Image wajib diberikan');
             }
 
             $user->update([
-                'image' => $request->image
+                'image' => $fileName
             ]);
             return $this->success($user);
         }

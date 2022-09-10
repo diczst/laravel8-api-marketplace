@@ -43,4 +43,12 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    // has many : User bisa memiliki banyak toko
+    // hasOne : user hanya bisa memiliki satu toko
+    public function toko() {
+        // return $this->hasOne(Toko::class, "userId", "id");
+        return $this->hasMany(Toko::class, "userId", "id");
+
+    }
 }
